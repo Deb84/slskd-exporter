@@ -1,8 +1,6 @@
 package slskd
 
-type Transfers struct {
-	Transfers []Transfer
-}
+type Transfers []Transfer
 
 type Transfer struct {
 	Username    string      `json:"username"`
