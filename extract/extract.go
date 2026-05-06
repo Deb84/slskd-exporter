@@ -1,22 +1,14 @@
 package extract
 
 import (
-	"crypto/tls"
-	"fmt"
-	"net/http"
 	"slskd-exporter/domain"
 )
 
 func Extract(env domain.SlskdEnv) {
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
-
 	routes := CreateRoutes(env.HOST, env.PORT)
-	token := Auth(*httpClient, routes, env.USER, env.PASSWORD)
-	fmt.Println(token)
+	client := NewClient(&routes)
+
+	token := Auth(&client, env.USER, env.PASSWORD)
+	client.SetHeader("Authorization", []string{token.TokenType + " " + token.Token})
+	FetchUploads(&client)
 }
