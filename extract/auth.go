@@ -3,7 +3,7 @@ package extract
 import (
 	"bytes"
 	"encoding/json"
-	"net/http"
+	"slskd-exporter/domain/slskd"
 )
 
 type authPayload struct {
@@ -11,12 +11,8 @@ type authPayload struct {
 	Username string `json:"username"`
 }
 
-type authResponse struct {
-	Token      string `json:"token"`
-	TokenTyper string `json:"tokenType"`
-}
-
-func Auth(client http.Client, routes Routes, user string, pass string) string {
+func Auth(client *Client, user string, pass string) slskd.Token {
+	routes := client.Routes
 
 	payload := authPayload{
 		Password: pass,
@@ -28,24 +24,22 @@ func Auth(client http.Client, routes Routes, user string, pass string) string {
 		panic(err)
 	}
 
-	req, err := http.NewRequest("POST", routes.Session, bytes.NewBuffer(jsonPayload))
+	req, err := client.NewRequest("POST", routes.Session, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		panic(err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-
-	response, err := client.Do(req)
+	response, err := client.HttpClient.Do(req)
 	if err != nil {
 		panic(err)
 	}
 
 	//fmt.Println(response.StatusCode)
-	var result authResponse
-	json.NewDecoder(response.Body).Decode(&result)
+	var token slskd.Token
+	json.NewDecoder(response.Body).Decode(&token)
 	//fmt.Println(result.Token)
 
 	defer response.Body.Close()
 
-	return result.Token
+	return token
 }
