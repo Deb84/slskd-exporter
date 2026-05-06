@@ -1,1 +1,8 @@
-.env
+/bin/
+/build/
+/dist/
+
+*.env
+*.exe
+*.dll
+*.cache
