@@ -1,7 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"slskd-exporter/extract"
+)
 
 func main() {
-	fmt.Printf("test")
+	env := GetEnvMap()
+	extract.Extract(env.Slskd)
 }
