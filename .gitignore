@@ -7,3 +7,4 @@
 *.dll
 *.cache
 docker-compose.yml
+.Zone.Identifier
