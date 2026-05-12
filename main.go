@@ -59,7 +59,7 @@ func main() {
 
 		err := scrape(db, session)
 		if err != nil {
-			slog.Error(fmt.Sprintf("Unable to complete this scrape, retrying in %ds", env.ScrapeInterval.Seconds()))
+			slog.Error(fmt.Sprintf("Unable to complete this scrape, retrying in %fs", env.ScrapeInterval.Seconds()))
 		}
 		mu.Unlock()
 	}
