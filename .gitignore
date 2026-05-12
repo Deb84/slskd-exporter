@@ -6,3 +6,4 @@
 *.exe
 *.dll
 *.cache
+docker-compose.yml
