@@ -37,27 +37,27 @@ func tryFind(tx *gorm.DB, query interface{}, dest interface{}) (bool, error) {
 func (db *DB) CreateTransfer(tx *gorm.DB, transfer *postgres.Transfer, file *postgres.File, batchID *BatchID) error {
 
 	//file
-	handleFile := func(file *postgres.File) error {
+	handleFile := func(file *postgres.File) (int64, error) {
 		var existingFile postgres.File
 
 		fileExists, err := tryFind(tx, &postgres.File{Path: file.Path}, &existingFile)
 		if err != nil {
-			return err
+			return 0, err
 		}
 
 		// file exists in db
 		if fileExists {
 			slog.Info(fmt.Sprintf("File %s already exists", file.Path))
 			file.ID = existingFile.ID
-			return nil
+			return file.ID, nil
 		}
 
 		// file doesn't exists in db
 		if err := tx.Create(file).Error; err != nil {
-			return fmt.Errorf(`Create file "%s": %w`, file.Path, err)
+			return 0, fmt.Errorf(`Create file "%s": %w`, file.Path, err)
 		}
 		slog.Info(fmt.Sprintf("File %s created", file.Path))
-		return nil
+		return file.ID, nil
 	}
 
 	// batch
@@ -115,9 +115,12 @@ func (db *DB) CreateTransfer(tx *gorm.DB, transfer *postgres.Transfer, file *pos
 
 	}
 
-	if err := handleFile(file); err != nil {
+	fileID, err := handleFile(file)
+	if err != nil {
 		return err
 	}
+
+	transfer.FileID = fileID
 
 	if err := handleTransfer(transfer, batchID); err != nil {
 		return err
