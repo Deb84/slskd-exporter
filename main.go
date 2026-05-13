@@ -32,8 +32,11 @@ func scrape(db *database.DB, session *slskd.ExtractionSession) error {
 
 	convertedDownload := convertData(scrapedData.Downloads)
 	convertedUpload := convertData(scrapedData.Uploads)
-	db.CreateTransfers(convertedDownload)
-	db.CreateTransfers(convertedUpload)
+	err = db.CreateTransfers(convertedDownload)
+	err = db.CreateTransfers(convertedUpload)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
