@@ -3,12 +3,13 @@ package slskd
 import (
 	"bytes"
 	"encoding/json"
-	"log/slog"
+	"slskd-exporter/logger"
 	"slskd-exporter/models/slskd"
 	"time"
 )
 
 type Session struct {
+	Logger        *logger.Logger
 	Username      string
 	Credentials   slskd.Credentials
 	Authorization slskd.Authorization
@@ -27,7 +28,7 @@ func NewSession(client *Client, user string, pass string) *Session {
 
 	err := session.NewToken(client, &payload)
 	if err != nil {
-		slog.Error("Unable to get a Slskd token")
+		session.Logger.Error("Unable to get a Slskd token")
 	}
 
 	return session
@@ -68,6 +69,6 @@ func (session *Session) IsExpiredToken(margin time.Duration) bool {
 
 func (session *Session) RenewToken(client *Client) {
 	if session.NewToken(client, &session.Credentials) != nil {
-		slog.Error("Unable to renew the Slskd token")
+		session.Logger.Error("Unable to renew the Slskd token")
 	}
 }

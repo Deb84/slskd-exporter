@@ -3,8 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"log"
-	"log/slog"
 	"time"
 
 	"gorm.io/gorm"
@@ -30,10 +28,10 @@ func connectionWithRetry(ctx context.Context, dbContext *DBContext) (*gorm.DB, e
 			tryCount++
 			db, err := gorm.Open(dbContext.Dialector, dbContext.GormOptions...)
 			if err == nil {
-				log.Println("Database connected")
+				dbContext.Logger.Info("Database connected")
 				return db, nil
 			}
-			slog.Warn("Unable to connect to database, retrying...", "Try", tryCount)
+			dbContext.Logger.Warn("Unable to connect to database, retrying... Try=%s", tryCount)
 			lastErr = err
 		}
 	}

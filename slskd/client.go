@@ -3,15 +3,17 @@ package slskd
 import (
 	"crypto/tls"
 	"net/http"
+	"slskd-exporter/logger"
 )
 
 type Client struct {
+	Logger     *logger.Logger
 	HttpClient *http.Client
 	Routes     *Routes
 	Headers    http.Header
 }
 
-func NewClient(routes *Routes) *Client {
+func NewClient(logger *logger.Logger, routes *Routes) *Client {
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -21,6 +23,7 @@ func NewClient(routes *Routes) *Client {
 	}
 
 	return &Client{
+		Logger:     logger,
 		HttpClient: httpClient,
 		Routes:     routes,
 		Headers: http.Header{

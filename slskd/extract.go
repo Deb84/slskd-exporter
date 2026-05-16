@@ -1,23 +1,25 @@
 package slskd
 
 import (
-	"log/slog"
+	"slskd-exporter/logger"
 	"slskd-exporter/models"
 	"slskd-exporter/models/slskd"
 	"time"
 )
 
 type ExtractionSession struct {
+	Logger     *logger.Logger
 	HttpClient *Client
 	Session    *Session
 }
 
-func NewExtraction(env models.SlskdEnv) *ExtractionSession {
+func NewExtraction(logger *logger.Logger, env models.SlskdEnv) *ExtractionSession {
 	routes := NewRoutes(env.HOST, env.PORT)
-	client := NewClient(&routes)
+	client := NewClient(logger, &routes)
 	session := NewSession(client, env.USER, env.PASSWORD)
 
 	return &ExtractionSession{
+		Logger:     logger,
 		HttpClient: client,
 		Session:    session,
 	}
@@ -36,7 +38,7 @@ func (extraction *ExtractionSession) DoExtraction() (*slskd.ExtractedTransfers, 
 
 	transfers, err := FetchTransfers(client)
 	if err != nil {
-		slog.Error("An error occured with the slskd extraction.")
+		extraction.Logger.Error("An error occured with the slskd extraction.")
 		return nil, err
 	}
 

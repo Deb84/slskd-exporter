@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"slskd-exporter/adapters"
 	"slskd-exporter/database"
+	"slskd-exporter/logger"
 	"slskd-exporter/models"
 	"slskd-exporter/models/postgres"
 	slskdModels "slskd-exporter/models/slskd"
@@ -42,12 +42,16 @@ func scrape(db *database.DB, session *slskd.ExtractionSession) error {
 
 func main() {
 	env := GetEnv()
-	db, err := database.NewDB(env.DbEnv, &postgres.Transfer{}, &postgres.File{}, &postgres.Batch{})
+
+	logger := logger.NewLogger()
+	logger.Config.SetLevel(env.LogLevel)
+
+	db, err := database.NewDB(logger, env.DbEnv, &postgres.Transfer{}, &postgres.File{}, &postgres.Batch{})
 	if err != nil {
 		sorry(err)
 	}
 
-	session := slskd.NewExtraction(env.Slskd)
+	session := slskd.NewExtraction(logger, env.Slskd)
 
 	ticker := time.NewTicker(env.ScrapeInterval)
 	defer ticker.Stop()
@@ -56,7 +60,7 @@ func main() {
 
 		err := scrape(db, session)
 		if err != nil {
-			slog.Error(fmt.Sprintf("Unable to complete this scrape, retrying in %fs", env.ScrapeInterval.Seconds()))
+			logger.Error("Unable to complete this scrape, retrying in %fs", env.ScrapeInterval.Seconds())
 		}
 	}
 }

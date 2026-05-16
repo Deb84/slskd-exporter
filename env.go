@@ -5,8 +5,10 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
+	"slskd-exporter/logger"
 	"slskd-exporter/models"
 
 	"github.com/joho/godotenv"
@@ -26,9 +28,29 @@ const (
 	POSTGRES_PORT     = "POSTGRES_PORT"
 
 	SCRAPE_INTERVAL = "SCRAPE_INTERVAL"
+	LOG_LEVEL       = "LOG_LEVEL"
 )
 
 const envFile = ".env"
+
+func parseLogLevel(level string) int {
+	level = strings.ToUpper(level)
+	switch level {
+	case "DEBUG":
+		return logger.LevelDebug
+	case "VERBOSE":
+		return logger.LevelVerbose
+	case "INFO":
+		return logger.LevelInfo
+	case "WARN":
+		return logger.LevelWarn
+	case "ERROR":
+		return logger.LevelError
+	default:
+		slog.Warn("Unable to parse log level, default value (INFO) will be used")
+		return logger.LevelInfo
+	}
+}
 
 func parseScrapeInterval(intervalStr string) time.Duration {
 
@@ -79,6 +101,7 @@ func GetEnv() models.Env {
 	return models.Env{
 		Slskd:          slskdEnv,
 		DbEnv:          dbEnv,
+		LogLevel:       parseLogLevel(os.Getenv(LOG_LEVEL)),
 		ScrapeInterval: parseScrapeInterval(os.Getenv(SCRAPE_INTERVAL)),
 	}
 }
