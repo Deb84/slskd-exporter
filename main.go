@@ -9,7 +9,6 @@ import (
 	"slskd-exporter/models/postgres"
 	slskdModels "slskd-exporter/models/slskd"
 	"slskd-exporter/slskd"
-	"sync"
 	"time"
 )
 
@@ -53,17 +52,11 @@ func main() {
 	ticker := time.NewTicker(env.ScrapeInterval)
 	defer ticker.Stop()
 
-	var mu sync.Mutex
-
 	for range ticker.C {
-		if !mu.TryLock() {
-			continue
-		}
 
 		err := scrape(db, session)
 		if err != nil {
 			slog.Error(fmt.Sprintf("Unable to complete this scrape, retrying in %fs", env.ScrapeInterval.Seconds()))
 		}
-		mu.Unlock()
 	}
 }
