@@ -34,7 +34,7 @@ func tryFind(tx *gorm.DB, query interface{}, dest interface{}) (bool, error) {
 	return false, err
 }
 
-func (db *DB) CreateTransfer(tx *gorm.DB, transfer *postgres.Transfer, file *postgres.File, batchID *BatchID) error {
+func CreateTransfer(tx *gorm.DB, transfer *postgres.Transfer, file *postgres.File, batchID *BatchID) error {
 
 	//file
 	handleFile := func(file *postgres.File) (int64, error) {
@@ -93,10 +93,19 @@ func (db *DB) CreateTransfer(tx *gorm.DB, transfer *postgres.Transfer, file *pos
 
 		batch := newBatch(batchID)
 
-		// transfer exists in db
-		if transferExists {
+		// transfer exists and it's not different in db
+		if transferExists && !IsDifferent(&existingTransfer, transfer) {
 			slog.Info(fmt.Sprintf("Transfer %s already exists", transfer.TransferID))
 			batch.ID = existingTransfer.BatchID
+			return nil
+		}
+
+		// transfer exists and it's different in db
+		if transferExists {
+			slog.Info(fmt.Sprintf("Transfer %s already exists but it's different", transfer.TransferID))
+			updatedTransfer := UpdateTransfer(existingTransfer, transfer)
+			tx.Updates(&updatedTransfer)
+			slog.Info(fmt.Sprintf("Transfer %s updated", transfer.TransferID))
 			return nil
 		}
 
@@ -154,7 +163,7 @@ func (db *DB) CreateTransfers(transfersContext *models.TransfersContext) error {
 				batchID = batchIDs[batchRef]
 			}
 
-			if err := db.CreateTransfer(tx, transfer, file, batchID); err != nil {
+			if err := CreateTransfer(tx, transfer, file, batchID); err != nil {
 				errCount++
 				lastErr = err
 				tx.RollbackTo(savePoint)
