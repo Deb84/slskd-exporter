@@ -45,7 +45,7 @@ func convertSlskdDuration(duration string, transferId string) time.Duration {
 
 func isoToTimestamp(iso string) time.Time {
 	t, _ := time.Parse(time.RFC3339, iso)
-	return t
+	return t.UTC().Truncate(time.Microsecond)
 }
 
 func ConvertTransferSlskd(data *slskd.File) *domain.Transfer {
