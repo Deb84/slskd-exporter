@@ -103,8 +103,8 @@ func CreateTransfer(tx *gorm.DB, transfer *postgres.Transfer, file *postgres.Fil
 		// transfer exists and it's different in db
 		if transferExists {
 			slog.Info(fmt.Sprintf("Transfer %s already exists but it's different", transfer.TransferID))
-			updatedTransfer := UpdateTransfer(existingTransfer, transfer)
-			tx.Updates(&updatedTransfer)
+			updatedTransfer := UpdateTransfer(&existingTransfer, transfer)
+			tx.Save(updatedTransfer)
 			slog.Info(fmt.Sprintf("Transfer %s updated", transfer.TransferID))
 			return nil
 		}
