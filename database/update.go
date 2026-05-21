@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-type Pair[E any, N any] struct {
-	Exising E
-	New     N
-}
-
 func IsDifferent(a *postgres.Transfer, b *postgres.Transfer) bool {
 	return a.Size != b.Size ||
 		a.State != b.State ||
