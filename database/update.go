@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-type Pair[E any, N any] struct {
-	Exising E
-	New     N
-}
-
 func IsDifferent(a *postgres.Transfer, b *postgres.Transfer) bool {
 	return a.Size != b.Size ||
 		a.State != b.State ||
@@ -26,7 +21,7 @@ func IsDifferent(a *postgres.Transfer, b *postgres.Transfer) bool {
 		a.RemainingTime != b.RemainingTime
 }
 
-func UpdateTransfer(updatedTr postgres.Transfer, newTr *postgres.Transfer) *postgres.Transfer {
+func UpdateTransfer(updatedTr *postgres.Transfer, newTr *postgres.Transfer) *postgres.Transfer {
 	updatedTr.Size = newTr.Size                         // Size
 	updatedTr.State = newTr.State                       // State
 	updatedTr.EnqueuedAt = newTr.EnqueuedAt             // EnqueuedAt
@@ -41,5 +36,5 @@ func UpdateTransfer(updatedTr postgres.Transfer, newTr *postgres.Transfer) *post
 	updatedTr.PercentComplete = newTr.PercentComplete   // PercentComplete
 	updatedTr.RemainingTime = newTr.RemainingTime       // RemainingTime
 
-	return &updatedTr
+	return updatedTr
 }

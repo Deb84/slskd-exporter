@@ -66,6 +66,7 @@ func ConvertTransferSlskd(data *slskd.File) *domain.Transfer {
 		StartedAt:        isoToTimestamp(data.StartedAt),
 		EndedAt:          isoToTimestamp(data.EndedAt),
 		BytesTransferred: data.BytesTransferred,
+		Exception:        data.Exception,
 		AverageSpeed:     data.AverageSpeed,
 		Attempts:         data.Attempts,
 		BytesRemaining:   data.BytesRemaining,
