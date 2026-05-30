@@ -1,0 +1,18 @@
+services:
+  slskd-exporter:
+    container_name: slskd-exporter
+    image: ghcr.io/deb84/slskd-exporter:latest
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: slskd-exporter-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-slskd-exporter}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-slskd-exporter-password}
+      POSTGRES_DB: ${POSTGRES_DB:-slskd-exporter-db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    restart: unless-stopped
