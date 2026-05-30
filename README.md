@@ -16,7 +16,7 @@ docker compose up
 ```
 
 ## Grafana
-- add a postgres data source (login informations are in the .env file
+- add a postgres data source (default login informations are in the .env file)
 - create a dashboard (pre-built dashboard soon)
 - add a panel
 - select the postgres data source and write your query (see the postgres tables & columns below)
