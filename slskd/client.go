@@ -2,7 +2,11 @@ package slskd
 
 import (
 	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 )
 
 type Client struct {
@@ -11,12 +15,38 @@ type Client struct {
 	Headers    http.Header
 }
 
-func NewClient(routes *Routes) *Client {
+func handleCert(certPath string) (*tls.Config, error) {
+	if certPath == "" {
+		slog.Warn("No certificate provided, will ignore certificate verification")
+		return &tls.Config{
+			InsecureSkipVerify: true,
+		}, nil
+	}
+
+	certPool := x509.NewCertPool()
+
+	pemCert, err := os.ReadFile(certPath)
+	if err != nil {
+		return nil, err
+	}
+
+	certPool.AppendCertsFromPEM(pemCert)
+
+	return &tls.Config{
+		RootCAs: certPool,
+	}, nil
+}
+
+func NewClient(routes *Routes, certPath string) *Client {
+
+	tlsConfig, err := handleCert(certPath)
+	if err != nil {
+		slog.Warn(fmt.Sprintf("Invalid Certificate: %s Error: %s", certPath, err))
+	}
+
 	httpClient := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
+			TLSClientConfig: tlsConfig,
 		},
 	}
 

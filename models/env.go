@@ -7,6 +7,7 @@ type SlskdEnv struct {
 	PORT     string
 	USER     string
 	PASSWORD string
+	CERT     string
 }
 
 type DbEnv struct {
