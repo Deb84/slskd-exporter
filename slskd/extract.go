@@ -12,15 +12,19 @@ type ExtractionSession struct {
 	Session    *Session
 }
 
-func NewExtraction(env models.SlskdEnv) *ExtractionSession {
+func NewExtraction(env models.SlskdEnv) (*ExtractionSession, error) {
 	routes := NewRoutes(env.HOST, env.PORT)
 	client := NewClient(&routes, env.CERT)
-	session := NewSession(client, env.USER, env.PASSWORD)
+	session, err := NewSession(client, env.USER, env.PASSWORD)
+	if err != nil {
+		slog.Error("Unable to create a new Slskd session")
+		return nil, err
+	}
 
 	return &ExtractionSession{
 		HttpClient: client,
 		Session:    session,
-	}
+	}, nil
 }
 
 func (extraction *ExtractionSession) DoExtraction() (*slskd.ExtractedTransfers, error) {

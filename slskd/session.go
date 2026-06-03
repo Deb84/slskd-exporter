@@ -3,6 +3,7 @@ package slskd
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"slskd-exporter/models/slskd"
 	"time"
@@ -14,7 +15,7 @@ type Session struct {
 	Authorization slskd.Authorization
 }
 
-func NewSession(client *Client, user string, pass string) *Session {
+func NewSession(client *Client, user string, pass string) (*Session, error) {
 	payload := slskd.Credentials{
 		Password: pass,
 		Username: user,
@@ -27,10 +28,10 @@ func NewSession(client *Client, user string, pass string) *Session {
 
 	err := session.NewToken(client, &payload)
 	if err != nil {
-		slog.Error("Unable to get a Slskd token")
+		return nil, fmt.Errorf("Unable to get a Slskd token")
 	}
 
-	return session
+	return session, nil
 }
 
 func (session *Session) NewToken(client *Client, payload *slskd.Credentials) error {
@@ -53,9 +54,11 @@ func (session *Session) NewToken(client *Client, payload *slskd.Credentials) err
 
 	defer response.Body.Close()
 
-	//fmt.Println(response.StatusCode)
 	var token slskd.Authorization
-	json.NewDecoder(response.Body).Decode(&token)
+	err = json.NewDecoder(response.Body).Decode(&token)
+	if err != nil {
+		return fmt.Errorf("Unable to decode the json response from slskd token")
+	}
 	session.Authorization = token
 
 	return err
