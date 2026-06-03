@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"slskd-exporter/models/slskd"
 	"time"
 )
@@ -66,7 +65,7 @@ func (session *Session) NewToken(client *Client, payload *slskd.Credentials) err
 }
 
 func (session *Session) IsExpiredToken(margin time.Duration) bool {
-	expires, _ := time.Parse(time.RFC3339, session.Authorization.Expires)
+	expires := time.Unix(session.Authorization.Expires, 0)
 	return time.Now().After(expires.Add(margin))
 }
 
