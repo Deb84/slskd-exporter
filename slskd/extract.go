@@ -1,6 +1,7 @@
 package slskd
 
 import (
+	"fmt"
 	"log/slog"
 	"slskd-exporter/models"
 	"slskd-exporter/models/slskd"
@@ -17,8 +18,7 @@ func NewExtraction(env models.SlskdEnv) (*ExtractionSession, error) {
 	client := NewClient(&routes, env.CERT)
 	session, err := NewSession(client, env.USER, env.PASSWORD)
 	if err != nil {
-		slog.Error("Unable to create a new Slskd session")
-		return nil, err
+		return nil, fmt.Errorf("Unable to create a new Slskd session: %w", err)
 	}
 
 	return &ExtractionSession{
@@ -32,7 +32,10 @@ func (extraction *ExtractionSession) DoExtraction() (*slskd.ExtractedTransfers, 
 	session := extraction.Session
 
 	if session.IsExpiredToken(-5 * time.Minute) {
-		session.RenewToken(client)
+		err := session.RenewToken(client)
+		if err != nil {
+			slog.Error("Renew token failed", "error", err)
+		}
 	}
 
 	authorization := session.Authorization
@@ -40,8 +43,7 @@ func (extraction *ExtractionSession) DoExtraction() (*slskd.ExtractedTransfers, 
 
 	transfers, err := FetchTransfers(client)
 	if err != nil {
-		slog.Error("An error occured with the slskd extraction.")
-		return nil, err
+		return nil, fmt.Errorf("Slskd transfers extraction failed: %w", err)
 	}
 
 	return transfers, nil

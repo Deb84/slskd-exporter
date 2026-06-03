@@ -28,7 +28,7 @@ func NewSession(client *Client, user string, pass string) (*Session, error) {
 
 	err := session.NewToken(client, &payload)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get a Slskd token")
+		return nil, fmt.Errorf("Unable to get a Slskd token: %w", err)
 	}
 
 	return session, nil
@@ -39,17 +39,17 @@ func (session *Session) NewToken(client *Client, payload *slskd.Credentials) err
 
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
-		return err
+		return fmt.Errorf("Unable to encode the slskd credentials payload to json: %w", err)
 	}
 
 	req, err := client.NewRequest("POST", routes.Session, bytes.NewBuffer(jsonPayload))
 	if err != nil {
-		return err
+		return err // Error cause already writted
 	}
 
 	response, err := client.HttpClient.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf(`Unable to reach "%s": %w`, req.URL, err)
 	}
 
 	defer response.Body.Close()
@@ -57,8 +57,9 @@ func (session *Session) NewToken(client *Client, payload *slskd.Credentials) err
 	var token slskd.Authorization
 	err = json.NewDecoder(response.Body).Decode(&token)
 	if err != nil {
-		return fmt.Errorf("Unable to decode the json response from slskd token")
+		return fmt.Errorf("Unable to decode the json response from slskd token: %w", err)
 	}
+
 	session.Authorization = token
 
 	return err
@@ -69,8 +70,9 @@ func (session *Session) IsExpiredToken(margin time.Duration) bool {
 	return time.Now().After(expires.Add(margin))
 }
 
-func (session *Session) RenewToken(client *Client) {
-	if session.NewToken(client, &session.Credentials) != nil {
-		slog.Error("Unable to renew the Slskd token")
+func (session *Session) RenewToken(client *Client) error {
+	if err := session.NewToken(client, &session.Credentials); err != nil {
+		return fmt.Errorf("Unable to renew the Slskd token: %w", err)
 	}
+	return nil
 }
