@@ -8,7 +8,7 @@ git clone https://github.com/Deb84/slskd-exporter
 cd slskd-exporter
 mv .env-example .env
 ```
-Add your slskd informations to the .env file  
+Add your slskd informations to the .env file
 
 Start the docker container:
 ```

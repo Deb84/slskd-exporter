@@ -18,6 +18,7 @@ const (
 	SLSKD_PORT     = "SLSKD_PORT"
 	SLSKD_USER     = "SLSKD_USER"
 	SLSKD_PASSWORD = "SLSKD_PASSWORD"
+	SLSKD_CERT     = "SLSKD_TLS_CERT"
 
 	POSTGRES_USER     = "POSTGRES_USER"
 	POSTGRES_PASSWORD = "POSTGRES_PASSWORD"
@@ -29,6 +30,21 @@ const (
 )
 
 const envFile = ".env"
+
+func parsePath(path string) string {
+	if path == "" {
+		return ""
+	}
+
+	_, err := os.Stat(path)
+
+	if os.IsNotExist(err) {
+		slog.Warn(fmt.Sprintf("Unable to find the certificate: File %s doesn't exist", path))
+		path = ""
+	}
+
+	return ""
+}
 
 func parseScrapeInterval(intervalStr string) time.Duration {
 
@@ -66,6 +82,7 @@ func GetEnv() models.Env {
 		PORT:     os.Getenv(SLSKD_PORT),
 		USER:     os.Getenv(SLSKD_USER),
 		PASSWORD: os.Getenv(SLSKD_PASSWORD),
+		CERT:     os.Getenv(SLSKD_CERT),
 	}
 
 	dbEnv := models.DbEnv{

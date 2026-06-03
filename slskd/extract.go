@@ -14,7 +14,7 @@ type ExtractionSession struct {
 
 func NewExtraction(env models.SlskdEnv) *ExtractionSession {
 	routes := NewRoutes(env.HOST, env.PORT)
-	client := NewClient(&routes)
+	client := NewClient(&routes, env.CERT)
 	session := NewSession(client, env.USER, env.PASSWORD)
 
 	return &ExtractionSession{
