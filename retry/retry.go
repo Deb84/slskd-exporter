@@ -5,12 +5,12 @@ import (
 	"time"
 )
 
-func doRetryWithTimeout[T any](
+func RetryWithTimeout[T any](
 	timeout time.Duration,
 	interval time.Duration,
 	multiplier int,
-	CB func() (T, error),
-	doneCB func(error) error,
+	CB func(int) (T, error),
+	doneCB func(error, int) error,
 ) (T, error) {
 
 	var nul T // for undefined T value
@@ -32,51 +32,63 @@ func doRetryWithTimeout[T any](
 		cancel()
 	}
 
-	if result, lastErr := CB(); lastErr == nil {
+	// 0 is the initial try
+	result, err := CB(0)
+
+	if err == nil {
 		stop()
 		return result, nil // return result there's no error
 	}
+	lastErr = err
 
 	for {
 		select {
 		case <-ctx.Done():
-			return nul, doneCB(lastErr)
+			return nul, doneCB(lastErr, count)
 
 		case <-ticker.C:
 			count++
-			interval *= time.Duration(multiplier)
 
-			if result, lastErr := CB(); lastErr == nil {
+			result, err := CB(count)
+
+			if err == nil {
 				stop()
 				return result, nil // return result there's no error
 			}
 
+			lastErr = err
+			interval *= time.Duration(multiplier)
+			ticker = time.NewTicker(interval)
 		}
 	}
 }
 
-func retryWithNTry[T any](nTry int, interval time.Duration, multiplier int, CB func() (T, error)) (T, error) {
+func RetryWithNTry[T any](nTry int, interval time.Duration, multiplier int, CB func(int) (T, error)) (T, error) {
 	var nul T
 	var lastErr error
-	var count int
 
 	if multiplier == 0 {
 		multiplier = 1 // avoid *0 multiplication
 	}
 
-	if result, lastErr := CB(); lastErr == nil {
+	// 0 is the initial try
+	result, err := CB(0)
+
+	if err == nil {
 		return result, nil // return result there's no error
 	}
+	lastErr = err
 
-	for count <= nTry {
-		count++
+	for count := 1; count <= nTry; count++ {
 		interval *= time.Duration(multiplier)
 
-		result, lastErr := CB()
+		result, err := CB(count)
 
-		if lastErr == nil {
+		if err == nil {
 			return result, nil // if no error, return result
 		}
+
+		lastErr = err
 
 		time.Sleep(interval)
 	}
