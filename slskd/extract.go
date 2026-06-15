@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"slskd-exporter/models"
 	"slskd-exporter/models/slskd"
+	"slskd-exporter/retry"
 	"time"
 )
 
@@ -13,10 +14,40 @@ type ExtractionSession struct {
 	Session    *Session
 }
 
+func NewSessionWithRetry(client *Client, env *models.SlskdEnv) (*Session, error) {
+	cb := func(count int) (*Session, error) {
+
+		session, err := NewSession(client, env.USER, env.PASSWORD)
+		if err == nil {
+			return session, nil
+		}
+
+		slog.Warn("Unable to connect to slskd...", "Try", count)
+		return nil, err
+	}
+
+	doneCB := func(err error, _ int) error {
+		return err
+	}
+
+	session, err := retry.RetryWithTimeout(
+		30*time.Second,
+		5*time.Second,
+		1,
+		cb,
+		doneCB,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	return session, nil
+}
+
 func NewExtraction(env models.SlskdEnv) (*ExtractionSession, error) {
 	routes := NewRoutes(env.HOST, env.PORT)
 	client := NewClient(&routes, env.CERT)
-	session, err := NewSession(client, env.USER, env.PASSWORD)
+	session, err := NewSessionWithRetry(client, &env)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create a new Slskd session: %w", err)
 	}
