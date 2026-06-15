@@ -52,7 +52,10 @@ func main() {
 		sorry(err)
 	}
 
-	session := slskd.NewExtraction(env.Slskd)
+	session, err := slskd.NewExtraction(env.Slskd)
+	if err != nil {
+		sorry(err)
+	}
 
 	ticker := time.NewTicker(env.ScrapeInterval)
 	defer ticker.Stop()
