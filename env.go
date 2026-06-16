@@ -43,7 +43,7 @@ func parsePath(path string) string {
 		path = ""
 	}
 
-	return ""
+	return path
 }
 
 func parseScrapeInterval(intervalStr string) time.Duration {
