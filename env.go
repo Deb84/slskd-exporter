@@ -82,7 +82,7 @@ func GetEnv() models.Env {
 		PORT:     os.Getenv(SLSKD_PORT),
 		USER:     os.Getenv(SLSKD_USER),
 		PASSWORD: os.Getenv(SLSKD_PASSWORD),
-		CERT:     os.Getenv(SLSKD_CERT),
+		CERT:     parsePath(os.Getenv(SLSKD_CERT)),
 	}
 
 	dbEnv := models.DbEnv{
