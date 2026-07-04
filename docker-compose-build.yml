@@ -6,10 +6,10 @@ services:
       - .env
     restart: unless-stopped
     logging:
-    driver: json-file
-    options:
-      max-size: "10m"
-      max-file: "5"
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   postgres:
     image: postgres:17-alpine
