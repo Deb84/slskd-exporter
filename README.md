@@ -41,6 +41,7 @@ Batches are a set of transfers downloaded together
 - size (bytes (SI))
 - state
 - requested_at
+- enqueued_at
 - started_at
 - ended_at
 - bytes_transferred
