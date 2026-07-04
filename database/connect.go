@@ -1,51 +1,37 @@
 package database
 
 import (
-	"context"
 	"fmt"
-	"time"
+	"slskd-exporter/retry"
 
 	"gorm.io/gorm"
 )
 
-func connectionWithRetry(ctx context.Context, dbContext *DBContext) (*gorm.DB, error) {
-	ticker := time.NewTicker(dbContext.RetryInterval)
-	defer ticker.Stop()
-
-	var lastErr error
-	var tryCount int
-
-	for {
-		select {
-		case <-ctx.Done():
-			if lastErr != nil {
-				err := fmt.Errorf("Unable to connect to database, please check the connection information. Error: %w", lastErr)
-				return nil, err
-			}
-			return nil, ctx.Err()
-
-		case <-ticker.C:
-			tryCount++
-			db, err := gorm.Open(dbContext.Dialector, dbContext.GormOptions...)
-			if err == nil {
-				dbContext.Logger.Info("Database connected")
-				return db, nil
-			}
-			dbContext.Logger.Warn("Unable to connect to database, retrying... Try=%s", tryCount)
-			lastErr = err
+func connectDB(dbContext *DBContext) (*gorm.DB, error) {
+	cb := func(count int) (*gorm.DB, error) {
+		db, err := gorm.Open(dbContext.Dialector, dbContext.GormOptions...)
+		if err == nil {
+			return db, nil
 		}
+		dbContext.Logger.Warn("Unable to connect to database, retrying...", "Try", count)
+		return nil, err
 	}
 
-}
+	doneCB := func(err error, count int) error {
+		return fmt.Errorf("Unable to connect to database, please check the connection information. Error: %w", err)
+	}
 
-func connectDB(dbContext *DBContext) (*gorm.DB, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), dbContext.Timeout)
-	defer cancel()
-
-	db, err := connectionWithRetry(ctx, dbContext)
+	db, err := retry.RetryWithTimeout(
+		dbContext.Timeout,       // timeout
+		dbContext.RetryInterval, // interval between each try
+		1,                       // backoff multiplier
+		cb,                      // callback to call at each try
+		doneCB,                  // callback called at the end of timeout
+	)
 	if err != nil {
 		return nil, err
 	}
 
+	dbContext.Logger.Info("Database connected")
 	return db, nil
 }

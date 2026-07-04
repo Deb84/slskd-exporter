@@ -18,7 +18,10 @@ func FetchTransfer(client *Client, route string) (*slskd.Transfers, error) {
 	}
 
 	var transfers slskd.Transfers
-	json.NewDecoder(response.Body).Decode(&transfers)
+	err = json.NewDecoder(response.Body).Decode(&transfers)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to decode the json response from slskd transfers")
+	}
 
 	return &transfers, nil
 }
