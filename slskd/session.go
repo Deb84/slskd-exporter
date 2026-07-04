@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"slskd-exporter/logger"
 	"slskd-exporter/models/slskd"
 	"time"
 )
 
 type Session struct {
+	Logger        *logger.Logger
 	Username      string
 	Credentials   slskd.Credentials
 	Authorization slskd.Authorization
@@ -27,7 +29,7 @@ func NewSession(client *Client, user string, pass string) (*Session, error) {
 
 	err := session.NewToken(client, &payload)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get a Slskd token: %w", err)
+		session.Logger.Error("Unable to get a Slskd token: %w", err)
 	}
 
 	return session, nil

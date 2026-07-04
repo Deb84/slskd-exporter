@@ -3,7 +3,6 @@ package database
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"slskd-exporter/models"
 	"slskd-exporter/models/postgres"
 	"strconv"
@@ -34,7 +33,7 @@ func tryFind(tx *gorm.DB, query interface{}, dest interface{}) (bool, error) {
 	return false, err
 }
 
-func CreateTransfer(tx *gorm.DB, transfer *postgres.Transfer, file *postgres.File, batchID *BatchID) error {
+func (db *DB) CreateTransfer(tx *gorm.DB, transfer *postgres.Transfer, file *postgres.File, batchID *BatchID) error {
 
 	//file
 	handleFile := func(file *postgres.File) (int64, error) {
@@ -47,7 +46,7 @@ func CreateTransfer(tx *gorm.DB, transfer *postgres.Transfer, file *postgres.Fil
 
 		// file exists in db
 		if fileExists {
-			slog.Info(fmt.Sprintf("File %s already exists", file.Path))
+			db.Logger.Verbose("File %s already exists", file.Path)
 			file.ID = existingFile.ID
 			return file.ID, nil
 		}
@@ -56,7 +55,7 @@ func CreateTransfer(tx *gorm.DB, transfer *postgres.Transfer, file *postgres.Fil
 		if err := tx.Create(file).Error; err != nil {
 			return 0, fmt.Errorf(`Create file "%s": %w`, file.Path, err)
 		}
-		slog.Info(fmt.Sprintf("File %s created", file.Path))
+		db.Logger.Info("File %s created", file.Path)
 		return file.ID, nil
 	}
 
@@ -77,7 +76,7 @@ func CreateTransfer(tx *gorm.DB, transfer *postgres.Transfer, file *postgres.Fil
 			}
 
 			batchID.SetValue(batch.ID)
-			slog.Info(fmt.Sprintf("Batch %s created", strconv.FormatInt(batch.ID, 10)))
+			db.Logger.Info("Batch %s created", strconv.FormatInt(batch.ID, 10))
 		}
 		return nil
 	}
@@ -95,17 +94,17 @@ func CreateTransfer(tx *gorm.DB, transfer *postgres.Transfer, file *postgres.Fil
 
 		// transfer exists and it's not different in db
 		if transferExists && !IsDifferent(&existingTransfer, transfer) {
-			slog.Info(fmt.Sprintf("Transfer %s already exists", transfer.TransferID))
+			db.Logger.Verbose("Transfer %s already exists", transfer.TransferID)
 			batch.ID = existingTransfer.BatchID
 			return nil
 		}
 
 		// transfer exists and it's different in db
 		if transferExists {
-			slog.Info(fmt.Sprintf("Transfer %s already exists but it's different", transfer.TransferID))
+			db.Logger.Verbose("Transfer %s already exists but it's different", transfer.TransferID)
 			updatedTransfer := UpdateTransfer(&existingTransfer, transfer)
 			tx.Save(updatedTransfer)
-			slog.Info(fmt.Sprintf("Transfer %s updated", transfer.TransferID))
+			db.Logger.Info("Transfer %s updated", transfer.TransferID)
 			return nil
 		}
 
@@ -119,7 +118,7 @@ func CreateTransfer(tx *gorm.DB, transfer *postgres.Transfer, file *postgres.Fil
 		if err := tx.Create(transfer).Error; err != nil {
 			return fmt.Errorf(`Create transfer "%s": %w`, transfer.TransferID, err)
 		}
-		slog.Info(fmt.Sprintf("Transfer %s created", transfer.TransferID))
+		db.Logger.Info("Transfer %s created", transfer.TransferID)
 		return nil
 
 	}
@@ -163,11 +162,11 @@ func (db *DB) CreateTransfers(transfersContext *models.TransfersContext) error {
 				batchID = batchIDs[batchRef]
 			}
 
-			if err := CreateTransfer(tx, transfer, file, batchID); err != nil {
+			if err := db.CreateTransfer(tx, transfer, file, batchID); err != nil {
 				errCount++
 				lastErr = err
 				tx.RollbackTo(savePoint)
-				slog.Warn("Unable to create transfer", "transferID", transfer.TransferID, "error", err)
+				db.Logger.Warn("Unable to create transfer transferID=%s error=%s", transfer.TransferID, err.Error())
 			}
 		}
 

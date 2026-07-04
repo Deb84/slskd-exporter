@@ -2,7 +2,7 @@ package slskd
 
 import (
 	"fmt"
-	"log/slog"
+	"slskd-exporter/logger"
 	"slskd-exporter/models"
 	"slskd-exporter/models/slskd"
 	"slskd-exporter/retry"
@@ -10,11 +10,12 @@ import (
 )
 
 type ExtractionSession struct {
+	Logger     *logger.Logger
 	HttpClient *Client
 	Session    *Session
 }
 
-func NewSessionWithRetry(client *Client, env *models.SlskdEnv) (*Session, error) {
+func NewSessionWithRetry(logger *logger.Logger, client *Client, env *models.SlskdEnv) (*Session, error) {
 	cb := func(count int) (*Session, error) {
 
 		session, err := NewSession(client, env.USER, env.PASSWORD)
@@ -22,7 +23,7 @@ func NewSessionWithRetry(client *Client, env *models.SlskdEnv) (*Session, error)
 			return session, nil
 		}
 
-		slog.Warn("Unable to connect to slskd...", "Try", count)
+		logger.Warn("Unable to connect to slskd...", "Try", count)
 		return nil, err
 	}
 
@@ -44,15 +45,16 @@ func NewSessionWithRetry(client *Client, env *models.SlskdEnv) (*Session, error)
 	return session, nil
 }
 
-func NewExtraction(env models.SlskdEnv) (*ExtractionSession, error) {
+func NewExtraction(logger *logger.Logger, env models.SlskdEnv) (*ExtractionSession, error) {
 	routes := NewRoutes(env.HOST, env.PORT)
-	client := NewClient(&routes, env.CERT)
-	session, err := NewSessionWithRetry(client, &env)
+	client := NewClient(logger, &routes, env.CERT)
+	session, err := NewSessionWithRetry(logger, client, &env)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create a new Slskd session: %w", err)
 	}
 
 	return &ExtractionSession{
+		Logger:     logger,
 		HttpClient: client,
 		Session:    session,
 	}, nil
@@ -65,7 +67,7 @@ func (extraction *ExtractionSession) DoExtraction() (*slskd.ExtractedTransfers, 
 	if session.IsExpiredToken(-5 * time.Minute) {
 		err := session.RenewToken(client)
 		if err != nil {
-			slog.Error("Renew token failed", "error", err)
+			extraction.Logger.Error("Renew token failed", "error", err)
 		}
 	}
 

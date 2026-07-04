@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-	"log/slog"
 	"slskd-exporter/retry"
 
 	"gorm.io/gorm"
@@ -14,7 +13,7 @@ func connectDB(dbContext *DBContext) (*gorm.DB, error) {
 		if err == nil {
 			return db, nil
 		}
-		slog.Warn("Unable to connect to database, retrying...", "Try", count)
+		dbContext.Logger.Warn("Unable to connect to database, retrying...", "Try", count)
 		return nil, err
 	}
 
@@ -33,6 +32,6 @@ func connectDB(dbContext *DBContext) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	slog.Info("Database connected")
+	dbContext.Logger.Info("Database connected")
 	return db, nil
 }

@@ -21,6 +21,6 @@ type DbEnv struct {
 type Env struct {
 	Slskd          SlskdEnv
 	DbEnv          DbEnv
-	LogLevel       string
+	LogLevel       int
 	ScrapeInterval time.Duration
 }
