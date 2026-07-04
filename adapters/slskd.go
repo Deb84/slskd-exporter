@@ -61,8 +61,8 @@ func ConvertTransferSlskd(data *slskd.File) *domain.Transfer {
 		Direction:        data.Direction,
 		Size:             data.Size,
 		State:            data.State,
-		RequestedAt:      isoToTimestamp(data.RequestedAt),
-		EnqueuedAt:       isoToTimestamp(data.EnqueuedAt),
+		RequestedAt:      isoToTimestamp(data.RequestedAt + "Z"), // slskd requestedAt & enqueuedAt field dont match RFC3339 because the time zone is missing
+		EnqueuedAt:       isoToTimestamp(data.EnqueuedAt + "Z"),  // slskd requestedAt & enqueuedAt field dont match RFC3339 because the time zone is missing
 		StartedAt:        isoToTimestamp(data.StartedAt),
 		EndedAt:          isoToTimestamp(data.EndedAt),
 		BytesTransferred: data.BytesTransferred,
