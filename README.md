@@ -1,5 +1,9 @@
 # slskd-exporter
 
+> [!WARNING]
+> slskd now has an integrated dashboard, which currently meets my needs, so I no longer actively maintain this project
+> But feel free to open an issue if you encounter any problems.
+
 ## Install
 
 Clone the repo and rename the .env file:
